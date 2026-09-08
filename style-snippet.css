@@ -1,0 +1,19 @@
+#custom-inj {
+  min-width: 12px;
+  margin: 0 7.5px;
+  border-right: 1px solid alpha(@foreground, 0.2);
+  padding-right: 15px;
+}
+
+#custom-inj.up {
+  color: #a6e3a1;
+}
+
+#custom-inj.down {
+  color: #f38ba8;
+}
+
+#custom-inj.stale,
+#custom-inj.offline {
+  opacity: 0.6;
+}

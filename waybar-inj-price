@@ -1,0 +1,66 @@
+#!/bin/bash
+# waybar-inj-price — INJ price widget for Waybar (Omarchy)
+# Source: CoinGecko simple price (same 24h-change source injective-explorer uses)
+# Output: waybar JSON {text, tooltip, class}
+# Deps: curl, jq
+
+set -u
+
+COIN_ID="injective-protocol"
+API_URL="https://api.coingecko.com/api/v3/simple/price?ids=${COIN_ID}&vs_currencies=usd&include_24hr_change=true"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/waybar-inj-price"
+CACHE_FILE="$CACHE_DIR/last-good.json"
+TIMEOUT=10
+
+mkdir -p "$CACHE_DIR"
+
+emit() { # $1=text $2=tooltip $3=class
+  local text="$1" tooltip="$2" class="$3"
+  text=$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  tooltip=$(printf '%s' "$tooltip" | sed 's/\\/\\\\/g; s/"/\\"/g; :a;N;$!ba; s/\n/\\n/g')
+  printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$text" "$tooltip" "$class"
+}
+
+render() { # $1=price $2=change $3=label(e.g. "" or "stale")
+  local price="$1" change="$2" stale="$3"
+  local price_fmt change_fmt arrow cls
+  price_fmt=$(printf '%.2f' "$price")
+  if awk "BEGIN {exit !($change >= 0)}"; then
+    arrow="▲"; cls="up"
+    change_fmt=$(printf '+%.1f' "$change")
+  else
+    arrow="▼"; cls="down"
+    change_fmt=$(printf '%.1f' "$change")
+  fi
+  [ -n "$stale" ] && cls="$cls stale"
+  local text="INJ \$$price_fmt $arrow $change_fmt%"
+  local updated
+  updated=$(date '+%Y-%m-%d %H:%M:%S')
+  local tooltip
+  if [ -n "$stale" ]; then
+    tooltip=$(printf 'Injective (INJ)\n$%s (%s%% 24h)\nSource: CoinGecko\nUpdated: %s\n(%s)\nClick: open injscan.com' "$price_fmt" "$change_fmt" "$updated" "$stale")
+  else
+    tooltip=$(printf 'Injective (INJ)\n$%s (%s%% 24h)\nSource: CoinGecko\nUpdated: %s\nClick: open injscan.com' "$price_fmt" "$change_fmt" "$updated")
+  fi
+  emit "$text" "$tooltip" "$cls"
+}
+
+# Fetch fresh price
+resp=$(curl -sS --max-time "$TIMEOUT" "$API_URL" 2>/dev/null)
+if printf '%s' "$resp" | jq -e '."injective-protocol".usd' >/dev/null 2>&1; then
+  price=$(printf '%s' "$resp" | jq -r '."injective-protocol".usd')
+  change=$(printf '%s' "$resp" | jq -r '."injective-protocol".usd_24h_change // 0')
+  printf '%s' "$resp" | jq -c --arg ts "$(date +%s)" '. + {cached_at: ($ts|tonumber)}' > "$CACHE_FILE"
+  render "$price" "$change" ""
+  exit 0
+fi
+
+# Fallback: cached value
+if [ -f "$CACHE_FILE" ] && jq -e '."injective-protocol".usd' "$CACHE_FILE" >/dev/null 2>&1; then
+  price=$(jq -r '."injective-protocol".usd' "$CACHE_FILE")
+  change=$(jq -r '."injective-protocol".usd_24h_change // 0' "$CACHE_FILE")
+  render "$price" "$change" "cached, offline"
+  exit 0
+fi
+
+emit "INJ n/a" "$(printf 'Injective (INJ)\nPrice unavailable (CoinGecko unreachable)\nClick: open injscan.com')" "offline"

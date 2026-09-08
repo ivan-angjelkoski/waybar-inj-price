@@ -1,0 +1,8 @@
+  "custom/inj": {
+    "exec": "waybar-inj-price",
+    "return-type": "json",
+    "interval": 180,
+    "tooltip": true,
+    "on-click": "xdg-open https://injscan.com >/dev/null 2>&1 &",
+    "signal": 11
+  }
