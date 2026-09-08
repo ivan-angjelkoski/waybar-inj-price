@@ -35,11 +35,24 @@ if os.path.exists(style_path):
     # Remove our snippet (everything from #custom-inj { to the stale/offline rule)
     new_css, n = re.subn(r'\n#custom-inj \{.*?\n#custom-inj\.stale,\n#custom-inj\.offline \{.*?\n\}\n', "\n", css, flags=re.DOTALL)
     if n:
-        with open(style_path, "w") as f:
-            f.write(new_css)
         print("Removed #custom-inj styles")
     else:
         print("No #custom-inj styles found, skipping")
+    # Remove the theme divider override (aibar-openai is first again, so the
+    # theme's own left divider must come back)
+    new_css, m = re.subn(r'\n/\* waybar-inj-price: custom/inj sits first.*?\n\}\n', "\n", new_css, flags=re.DOTALL)
+    if m:
+        print("Removed theme divider override")
+    # custom/inj owned the group's left edge while installed; hand it back to
+    # ai-usagebar (now first again) so its left divider returns.
+    if "#custom-aibar-openai" in new_css and "border-left" not in new_css:
+        anchor = "#custom-aibar-openai,\n#custom-aibar-zai,\n#custom-aibar-opencode {\n  border-right:"
+        edge = "#custom-aibar-openai {\n  border-left: 1px solid alpha(@foreground, 0.2);\n  padding-left: 15px;\n}\n\n"
+        if anchor in new_css:
+            new_css = new_css.replace(anchor, edge + anchor, 1)
+            print("Restored #custom-aibar-openai left edge")
+    with open(style_path, "w") as f:
+        f.write(new_css)
 EOF
 
 rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/waybar-inj-price"

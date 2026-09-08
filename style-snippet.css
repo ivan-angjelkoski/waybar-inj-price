@@ -1,6 +1,8 @@
 #custom-inj {
   min-width: 12px;
   margin: 0 7.5px;
+  border-left: 1px solid alpha(@foreground, 0.2);
+  padding-left: 15px;
   border-right: 1px solid alpha(@foreground, 0.2);
   padding-right: 15px;
 }
@@ -16,4 +18,10 @@
 #custom-inj.stale,
 #custom-inj.offline {
   opacity: 0.6;
+}
+
+/* waybar-inj-price: custom/inj sits first and owns the group's left edge,
+   so disable the theme's aibar left divider (else double lines + gutter) */
+window#waybar .modules-right #custom-aibar-openai {
+  border-left: none;
 }

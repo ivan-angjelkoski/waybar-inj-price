@@ -106,11 +106,41 @@ if "#custom-inj" not in css:
     if css and not css.endswith("\n"):
         css += "\n"
     css += "\n" + css_snippet
-    with open(style_path, "w") as f:
-        f.write(css)
     print("Appended #custom-inj styles")
 else:
     print("#custom-inj styles already present, skipping")
+
+# d) custom/inj is installed first in modules-right, so it owns the group's
+# left edge. Drop ai-usagebar's old left edge to avoid a double divider gap.
+aibar_edge = re.compile(
+    r'\n#custom-aibar-openai \{\s*\n(?:  [^\n]*\n)*?  padding-left:[^\n]*\n\}',
+)
+css, n = aibar_edge.subn("\n", css)
+if n:
+    print("Removed #custom-aibar-openai left edge (now owned by #custom-inj)")
+else:
+    print("No #custom-aibar-openai left edge found, skipping")
+
+# e) Some Omarchy themes (e.g. Ayaka) draw the aibar left divider with a
+# higher-specificity selector that survives (d). Neutralize it so only
+# custom/inj's divider shows. Higher specificity + later in file wins.
+OVERRIDE = (
+    "/* waybar-inj-price: custom/inj sits first and owns the group's left edge,\n"
+    "   so disable the theme's aibar left divider (else double lines + gutter) */\n"
+    "window#waybar .modules-right #custom-aibar-openai {\n"
+    "  border-left: none;\n"
+    "}\n"
+)
+if "waybar-inj-price: custom/inj sits first" not in css:
+    if css and not css.endswith("\n"):
+        css += "\n"
+    css += "\n" + OVERRIDE
+    print("Added theme divider override")
+else:
+    print("Theme divider override already present, skipping")
+
+with open(style_path, "w") as f:
+    f.write(css)
 EOF
 
 # 5. Restart waybar (Omarchy) so changes take effect

@@ -71,6 +71,13 @@ Edit the module block in `~/.config/waybar/config.jsonc`:
 
 Move `"custom/inj"` anywhere in `modules-left` / `modules-center` / `modules-right` to reposition it.
 
+> **Note:** the installer puts `custom/inj` first in `modules-right`, where it
+> takes over the group's left divider. It removes ai-usagebar's own left edge
+> and neutralizes theme-level copies (e.g. Ayaka's
+> `window#waybar #custom-aibar-openai { border-left: ... }`, which wins over
+> plain selectors by specificity). Without that you'd get two divider lines
+> with a gutter between them. `uninstall.sh` hands the left edge back.
+
 ## Uninstall
 
 ```bash
