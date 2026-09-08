@@ -31,7 +31,7 @@ Click: open injscan.com
 ## Install
 
 ```bash
-git clone https://github.com/<you>/waybar-inj-price.git
+git clone https://github.com/ivan-angjelkoski/waybar-inj-price.git
 cd waybar-inj-price
 ./install.sh
 ```
