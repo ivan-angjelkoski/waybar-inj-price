@@ -30,6 +30,14 @@ Click: open injscan.com
 
 ## Install
 
+One-liner (like Opencode):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ivan-angjelkoski/waybar-inj-price/master/install.sh | bash
+```
+
+Or from a clone:
+
 ```bash
 git clone https://github.com/ivan-angjelkoski/waybar-inj-price.git
 cd waybar-inj-price

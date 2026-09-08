@@ -1,15 +1,32 @@
 #!/bin/bash
 # install.sh — install waybar-inj-price (INJ price widget for Waybar/Omarchy)
 # Idempotent: safe to re-run. Backs up waybar config before patching.
+#
+# Local:   ./install.sh
+# Remote:  curl -fsSL https://raw.githubusercontent.com/ivan-angjelkoski/waybar-inj-price/master/install.sh | bash
 set -euo pipefail
 
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_RAW="https://raw.githubusercontent.com/ivan-angjelkoski/waybar-inj-price/master"
+
+echo "==> waybar-inj-price installer"
+
+# Resolve payload source: files next to this script (git clone) or download (curl | bash)
+SRC_DIR=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)/waybar-inj-price" ]; then
+  SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+  SRC_DIR="$(mktemp -d)"
+  trap 'rm -rf "$SRC_DIR"' EXIT
+  echo "Fetching installer payload from $REPO_RAW ..."
+  for f in waybar-inj-price waybar-module.jsonc style-snippet.css; do
+    curl -fsSL "$REPO_RAW/$f" -o "$SRC_DIR/$f"
+  done
+fi
+
 BIN_TARGET="$HOME/.local/bin/waybar-inj-price"
 WAYBAR_DIR="$HOME/.config/waybar"
 CONFIG="$WAYBAR_DIR/config.jsonc"
 STYLE="$WAYBAR_DIR/style.css"
-
-echo "==> waybar-inj-price installer"
 
 # 1. Deps
 for dep in curl jq python3; do
@@ -21,7 +38,7 @@ done
 
 # 2. Install script
 mkdir -p "$(dirname "$BIN_TARGET")" "$WAYBAR_DIR"
-cp "$REPO_DIR/waybar-inj-price" "$BIN_TARGET"
+cp "$SRC_DIR/waybar-inj-price" "$BIN_TARGET"
 chmod +x "$BIN_TARGET"
 echo "Installed script -> $BIN_TARGET"
 
@@ -38,8 +55,8 @@ if [ -f "$STYLE" ]; then
   cp "$STYLE" "$STYLE.bak.$(date +%s)"
 fi
 
-MODULE_JSON="$(cat "$REPO_DIR/waybar-module.jsonc")"
-CSS_SNIPPET="$(cat "$REPO_DIR/style-snippet.css")"
+MODULE_JSON="$(cat "$SRC_DIR/waybar-module.jsonc")"
+CSS_SNIPPET="$(cat "$SRC_DIR/style-snippet.css")"
 
 CONFIG="$CONFIG" STYLE="$STYLE" MODULE_JSON="$MODULE_JSON" CSS_SNIPPET="$CSS_SNIPPET" python3 - <<'EOF'
 import os, re
