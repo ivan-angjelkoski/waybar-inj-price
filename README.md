@@ -86,6 +86,19 @@ Move `"custom/inj"` anywhere in `modules-left` / `modules-center` / `modules-rig
 
 Removes the binary, the module entry + styles, and clears the price cache.
 
+## Logo
+
+`assets/inj-logo.png` is the Injective mark (© Injective Labs), converted from
+`injective-explorer`'s `public/tokens-logo/injective.svg` — the same asset the
+explorer header uses.
+
+It is **not** wired into the bar yet: Waybar's `image` module blanks the entire
+bar in the tested build (v0.15.0, verified with both the logo PNG and a trivial
+16×16 test image, as `image#inj-logo` and plain `image`). If a future Waybar
+release fixes it, the plan is an `image` module directly left of `custom/inj`
+owning the group's left divider. Until then the widget uses the `INJ` text
+prefix.
+
 ## How it works
 
 - Fetches `https://api.coingecko.com/api/v3/simple/price?ids=injective-protocol&vs_currencies=usd&include_24hr_change=true`
